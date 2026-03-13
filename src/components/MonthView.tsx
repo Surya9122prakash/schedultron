@@ -122,7 +122,7 @@ export const MonthView: React.FC<CalendarProps> = ({
     const dateNode = (
         <div className="text-center flex flex-col items-center">
             <h2 className="text-xl font-semibold">
-                {zonedDate.format(dateFormat)}
+                {zonedDate.format("MMMM YYYY")}
             </h2>
             {timezoneLabelInclude && (
                 <p className="text-xs mt-1" style={{ color: "var(--calendar-secondary-text)" }}>
