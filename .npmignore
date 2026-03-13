@@ -1,0 +1,11 @@
+node_modules
+.git
+.vscode
+slotrix-test
+lib
+.gitignore
+.npmignore
+.DS_Store
+dayview_10_exhaustive_variants.md.resolved
+exhaustive_view_test_suite.md.resolved
+npm-calendar-package

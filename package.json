@@ -1,0 +1,50 @@
+{
+  "name": "schedultron",
+  "version": "1.1.1",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "description": "A powerful, framework-agnostic, and highly customizable React calendar component library.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "main": "dist/schedultron.umd.js",
+  "module": "dist/schedultron.es.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Surya9122prakash/schedultron.git"
+  },
+  "style": "dist/schedultron.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/schedultron.es.js",
+      "require": "./dist/schedultron.umd.js"
+    },
+    "./style.css": "./dist/schedultron.css"
+  },
+  "dependencies": {
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.6.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/node": "^25.4.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "tailwindcss": "^4.2.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-css-injected-by-js": "^3.5.0",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
