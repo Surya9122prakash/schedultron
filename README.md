@@ -2,6 +2,8 @@
 
 A powerful, framework-agnostic, and highly customizable React calendar component library. Built with performance and elegance in mind, `schedultron` provides a premium scheduling experience out of the box.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-blue?style=for-the-badge&logo=vercel)](https://schedultron-live.vercel.app)
+
 ---
 
 ## ✨ Key Features
@@ -10,7 +12,8 @@ A powerful, framework-agnostic, and highly customizable React calendar component
 - ⚡ **Framework Agnostic**: Packaged as a library that plays well with standard React workflows.
 - 🎨 **Premium UI**: Modern, clean, and responsive design with built-in glassmorphism and cyberpunk themes.
 - 🛠️ **Highly Extensible**: Plugin-ready architecture allowing you to hook into rendering, clicking, and saving workflows.
-- 🌐 **Timezone Aware**: Robust handling of complex timezones via `moment-timezone`.
+- 🕒 **Multiple Pickers**: Includes built-in `DatePicker` and `SlotDatePicker` for various booking flows.
+- 🌐 **Timezone Aware**: Robust handling of complex timezones across all components via `moment-timezone`.
 - 🧩 **Type Safe**: First-class TypeScript support with included declaration files.
 - 🚀 **Interactive Navigation**: Built-in support for "Today", "Prev", and "Next" actions with customizable renders.
 - ⚠️ **Conflict Detection**: Built-in conflict detection engine with multiple warning themes.
@@ -67,7 +70,7 @@ export default App;
 
 ## ⚙️ Props Global Reference
 
-All calendar views (`DayView`, `WeekView`, `MonthView`) accept the following properties:
+All calendar views (`DayView`, `WeekView`, `MonthView`, `DatePicker`, `SlotDatePicker`) accept the following properties:
 
 ### Core Configuration
 
@@ -80,6 +83,9 @@ All calendar views (`DayView`, `WeekView`, `MonthView`) accept the following pro
 | `slotInterval`         | `number`                        | Duration of each time slot in minutes (e.g., 15, 30, 60).         |
 | `dateFormat`           | `string`                        | Format template for dates (Moment.js compatible).                 |
 | `timeFormat`           | `string`                        | Display format for time (default:`HH:mm`).                      |
+
+> [!TIP]
+> All components are now synchronized to the same `timezone`. Changing the timezone will automatically update the selected date across all views.
 
 ### Events and Interaction
 
@@ -101,6 +107,15 @@ All calendar views (`DayView`, `WeekView`, `MonthView`) accept the following pro
 | `showEmptyState`       | `boolean`                                         | Display an empty state illustration when no events are scheduled.                    |
 | `emptyStateContent`    | `string`                                          | Custom text for empty state.                                                         |
 | `navigateToFirstEvent` | `boolean`                                         | Auto-scrolling to the first available event of the day.                              |
+
+### Component Specific Props
+
+#### `SlotDatePicker`
+| Prop              | Type                               | Description                                                 |
+| ----------------- | ---------------------------------- | ----------------------------------------------------------- |
+| `slots`         | `SlotGroup[]`                    | Grouped time slots for the user to pick from.               |
+| `onSlotSelect`  | `(time: string) => void`         | Callback when a time slot is selected.                      |
+| `selectedSlot`  | `string`                         | The currently selected time slot ID.                        |
 
 ---
 
