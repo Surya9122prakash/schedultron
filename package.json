@@ -1,6 +1,6 @@
 {
   "name": "schedultron",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "types": "dist/index.d.ts",
   "description": "A powerful, framework-agnostic, and highly customizable React calendar component library.",
