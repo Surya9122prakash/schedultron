@@ -22,6 +22,7 @@ export const MonthView: React.FC<CalendarProps> = ({
     onDeleteEvent: externalOnDeleteEvent,
     formFields: externalFormFields,
     onlyCreateEditRequired = true,
+    showTodayBelow = true,
     plugins,
     calendarTheme,
     calendarThemeVariant,
@@ -129,9 +130,11 @@ export const MonthView: React.FC<CalendarProps> = ({
                     GMT{zonedDate.format("Z")} • {timezone}
                 </p>
             )}
-            <button onClick={goToToday} className="mt-1 text-sm font-medium" style={{ color: "var(--calendar-primary)" }}>
-                Today
-            </button>
+            {showTodayBelow && (
+                <button onClick={goToToday} className="mt-1 text-sm font-medium" style={{ color: "var(--calendar-primary)" }}>
+                    Today
+                </button>
+            )}
         </div>
     );
 
@@ -232,7 +235,7 @@ export const MonthView: React.FC<CalendarProps> = ({
                         return (
                             <div
                                 key={idx}
-                                className="min-h-[120px] border-b border-r p-1 flex flex-col gap-1 transition-colors hover:bg-opacity-10"
+                                className="min-h-[120px] border-b border-r p-1 flex flex-col gap-1 transition-colors calendar-hover-bg"
                                 style={{
                                     borderColor: "var(--calendar-grid)",
                                     backgroundColor: isCurrentMonth ? "transparent" : "var(--calendar-secondary-bg)",

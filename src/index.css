@@ -13,6 +13,17 @@
     /* Firefox */
 }
 
+/* Optical alignment for the generic calendar SVG */
+.calendar-icon-align {
+    margin-top: 2px !important;
+}
+
+@media (hover: hover) {
+    .calendar-hover-bg:hover {
+        background-color: var(--calendar-accent) !important;
+    }
+}
+
 
 @keyframes fadeIn {
     from {
@@ -47,19 +58,19 @@
 /* Isolated Library Styles */
 .schedultron-input-hardened {
     width: 100% !important;
-    border: 1px solid #e5e7eb !important;
+    border: 1px solid var(--calendar-grid, #e5e7eb) !important;
     border-radius: 8px !important;
     padding: 20px !important;
-    background-color: rgba(249, 250, 251, 0.5) !important;
-    color: #374151 !important;
+    background-color: var(--calendar-secondary-bg, rgba(249, 250, 251, 0.5)) !important;
+    color: var(--calendar-text, #374151) !important;
     outline: none !important;
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .schedultron-input-hardened:focus {
-    box-shadow: 0 0 0 2px #3b82f6 !important;
-    border-color: #3b82f6 !important;
-    background-color: #ffffff !important;
+    box-shadow: 0 0 0 2px var(--calendar-primary, #3b82f6) !important;
+    border-color: var(--calendar-primary, #3b82f6) !important;
+    background-color: var(--calendar-bg, #ffffff) !important;
 }
 
 .schedultron-label-hardened {
@@ -67,7 +78,7 @@
     font-size: 0.875rem !important;
     font-weight: 500 !important;
     margin-bottom: 4px !important;
-    color: #374151 !important;
+    color: var(--calendar-text, #374151) !important;
 }
 
 .schedultron-field-container {
@@ -87,29 +98,30 @@
 }
 
 .schedultron-modal-content {
-    background-color: #ffffff !important;
+    background-color: var(--calendar-bg, #ffffff) !important;
     border-radius: 1rem !important;
     padding: 2rem !important;
-    width: 450px !important;
+    width: 600px !important;
     max-width: 90vw !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-    border: 1px solid #f3f4f6 !important;
+    border: 1px solid var(--calendar-grid, #f3f4f6) !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
+    color: var(--calendar-text, #1f2937) !important;
 }
 
 .schedultron-modal-title {
     font-size: 1.25rem !important;
     font-weight: 700 !important;
-    color: #1f2937 !important;
+    color: var(--calendar-text, #1f2937) !important;
     margin: 0 !important;
 }
 
 /* Button Hardening */
 .schedultron-btn-primary {
     padding: 0.5rem 1.5rem !important;
-    background-color: #2563eb !important;
-    color: #ffffff !important;
+    background-color: var(--calendar-primary, #2563eb) !important;
+    color: var(--calendar-event-text, #ffffff) !important;
     border-radius: 0.5rem !important;
     font-weight: 500 !important;
     transition: all 0.2s !important;
@@ -119,15 +131,15 @@
 }
 
 .schedultron-btn-primary:hover {
-    background-color: #1d4ed8 !important;
+    opacity: 0.9 !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
 }
 
 .schedultron-btn-secondary {
     padding: 0.5rem 1.25rem !important;
     background-color: transparent !important;
-    color: #4b5563 !important;
-    border: 1px solid #e5e7eb !important;
+    color: var(--calendar-text, #4b5563) !important;
+    border: 1px solid var(--calendar-grid, #e5e7eb) !important;
     border-radius: 0.5rem !important;
     font-weight: 500 !important;
     transition: all 0.2s !important;
@@ -135,7 +147,7 @@
 }
 
 .schedultron-btn-secondary:hover {
-    background-color: #f9fafb !important;
+    background-color: var(--calendar-secondary-bg, #f9fafb) !important;
 }
 
 .schedultron-btn-danger {

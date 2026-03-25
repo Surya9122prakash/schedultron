@@ -6,3 +6,5 @@ export * from './types';
 export * from './conflictTemplates';
 export * from './calendarThemes';
 export * from './utils';
+export * from './DatePicker';
+export * from './SlotDatePicker';

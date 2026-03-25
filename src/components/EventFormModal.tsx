@@ -49,7 +49,7 @@ const TimeSlotPicker: React.FC<{
     }, [slotInterval, timezone]);
 
     return (
-        <div className="absolute z-[70] bg-white border rounded shadow-xl mt-1 max-h-48 overflow-y-auto w-full no-scrollbar">
+        <div className="absolute z-[70] border rounded shadow-xl mt-1 max-h-48 overflow-y-auto w-full no-scrollbar" style={{ backgroundColor: "var(--calendar-bg)", borderColor: "var(--calendar-grid)" }}>
             {slots.map((s, i) => {
                 const isEnabled = checkIsSlotEnabled(s, enabledTimeSlots, disabledTimeSlots, enabledTimeInterval, disableTimeInterval);
                 return (
@@ -59,9 +59,10 @@ const TimeSlotPicker: React.FC<{
                             if (isEnabled) onChange(s.format(timeFormat));
                         }}
                         className={`px-3 py-2 text-sm border-b last:border-0 ${isEnabled
-                            ? "hover:bg-blue-50 cursor-pointer text-gray-800"
-                            : "bg-gray-50 text-gray-300 cursor-not-allowed"
+                            ? "cursor-pointer hover:opacity-80"
+                            : "cursor-not-allowed opacity-40"
                             }`}
+                        style={{ color: "var(--calendar-text)", borderColor: "var(--calendar-grid)" }}
                     >
                         {s.format(timeFormat)}
                     </div>
@@ -92,26 +93,29 @@ const CustomDatePicker: React.FC<{
     }, [viewDate]);
 
     return (
-        <div className="absolute z-[70] bg-white border rounded shadow-xl mt-1 p-3 w-64 animate-fadeIn">
+        <div className="absolute z-[70] border rounded shadow-xl mt-1 p-3 w-64 animate-fadeIn" style={{ backgroundColor: "var(--calendar-bg)", color: "var(--calendar-text)", borderColor: "var(--calendar-grid)" }}>
             <div className="flex justify-between items-center mb-2">
-                <button onClick={() => setViewDate(viewDate.clone().subtract(1, "month"))} className="p-1 hover:bg-gray-100 rounded">←</button>
+                <button onClick={() => setViewDate(viewDate.clone().subtract(1, "month"))} className="p-1 hover:opacity-70 rounded">←</button>
                 <span className="font-semibold">{viewDate.format("MMMM YYYY")}</span>
-                <button onClick={() => setViewDate(viewDate.clone().add(1, "month"))} className="p-1 hover:bg-gray-100 rounded">→</button>
+                <button onClick={() => setViewDate(viewDate.clone().add(1, "month"))} className="p-1 hover:opacity-70 rounded">→</button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs mb-1 font-bold text-gray-500">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs mb-1 font-bold" style={{ color: "var(--calendar-secondary-text)" }}>
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => <div key={d}>{d}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
-                {days.map((d, i) => (
-                    <div
-                        key={i}
-                        onClick={() => onChange(d.format(dateFormat))}
-                        className={`p-1.5 text-xs rounded cursor-pointer transition-colors ${d.isSame(viewDate, "month") ? "hover:bg-blue-100" : "text-gray-300"
-                            } ${value === d.format(dateFormat) ? "bg-blue-600 text-white" : ""}`}
-                    >
-                        {d.date()}
-                    </div>
-                ))}
+                {days.map((d, i) => {
+                    const isSelected = value === d.format(dateFormat);
+                    return (
+                        <div
+                            key={i}
+                            onClick={() => onChange(d.format(dateFormat))}
+                            className={`p-1.5 text-xs rounded cursor-pointer transition-colors ${d.isSame(viewDate, "month") ? "opacity-100 hover:opacity-70" : "opacity-40 hover:opacity-70"}`}
+                            style={isSelected ? { backgroundColor: "var(--calendar-primary)", color: "var(--calendar-event-text)" } : {}}
+                        >
+                            {d.date()}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
@@ -150,7 +154,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                     <h3 className="schedultron-modal-title">
                         {editingEvent ? "Edit Event" : "Create Event"}
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <button onClick={onClose} className="hover:opacity-70 transition-colors" style={{ color: "var(--calendar-secondary-text)" }}>
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -188,8 +192,8 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                                     return (
                                         <div className="flex gap-[16px] mt-[4px]">
                                             {field.options?.map((opt: any) => (
-                                                <label key={opt.value} className="flex items-center gap-[8px] cursor-pointer text-[#374151]">
-                                                    <input type="radio" name={field.name} value={opt.value} checked={formData[field.name] === opt.value} onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })} className="w-[16px] h-[16px] text-[#3b82f6] focus:ring-[#3b82f6]" />
+                                                <label key={opt.value} className="flex items-center gap-[8px] cursor-pointer" style={{ color: "var(--calendar-text)" }}>
+                                                    <input type="radio" name={field.name} value={opt.value} checked={formData[field.name] === opt.value} onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })} className="w-[16px] h-[16px]" style={{ accentColor: "var(--calendar-primary)" }} />
                                                     {opt.label}
                                                 </label>
                                             ))}
@@ -197,7 +201,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                                     );
                                 case "boolean":
                                     return (
-                                        <input type="checkbox" checked={!!formData[field.name]} onChange={(e) => setFormData({ ...formData, [field.name]: e.target.checked })} className="w-[20px] h-[20px] mt-[4px] cursor-pointer accent-[#3b82f6] rounded" />
+                                        <input type="checkbox" checked={!!formData[field.name]} onChange={(e) => setFormData({ ...formData, [field.name]: e.target.checked })} className="w-[20px] h-[20px] mt-[4px] cursor-pointer rounded" style={{ accentColor: "var(--calendar-primary)" }} />
                                     );
                                 case "attachment":
                                     return (
@@ -255,7 +259,8 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({
                                             />
                                             {isCustomFormat && (
                                                 <div
-                                                    className="absolute right-[14px] top-1/2 -translate-y-1/2 cursor-pointer text-[#9ca3af] hover:text-[#3b82f6] transition-colors z-10"
+                                                    className="absolute right-[14px] top-1/2 -translate-y-1/2 cursor-pointer hover:scale-110 transition-transform z-10"
+                                                    style={{ color: "var(--calendar-secondary-text)" }}
                                                     onClick={() => {
                                                         setActivePicker({ name: field.name, type: (field.type === "time" ? "time" : "date") });
                                                     }}

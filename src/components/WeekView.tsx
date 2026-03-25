@@ -27,6 +27,7 @@ export const WeekView: React.FC<CalendarProps> = ({
     navigationPosition = "center",
     renderNavigation,
     showEmptyState = true,
+    showTodayBelow = true,
     enabledTimeSlots,
     disabledTimeSlots,
     enabledTimeInterval,
@@ -254,16 +255,18 @@ export const WeekView: React.FC<CalendarProps> = ({
                     GMT{zonedDate.format("Z")} • {timezone}
                 </p>
             )}
-            <button onClick={goToToday} className="mt-1 text-sm font-medium" style={{ color: "var(--calendar-primary)" }}>
-                Today
-            </button>
+            {showTodayBelow && (
+                <button onClick={goToToday} className="mt-1 text-sm font-medium" style={{ color: "var(--calendar-primary)" }}>
+                    Today
+                </button>
+            )}
         </div>
     );
 
     const prevNode = (
         <button
             onClick={goToPreviousWeek}
-            className="px-3 py-1 rounded hover:bg-gray-200"
+            className="px-3 py-1 rounded calendar-hover-bg"
         >
             ◀
         </button>
@@ -272,7 +275,7 @@ export const WeekView: React.FC<CalendarProps> = ({
     const nextNode = (
         <button
             onClick={goToNextWeek}
-            className="px-3 py-1 rounded hover:bg-gray-200"
+            className="px-3 py-1 rounded calendar-hover-bg"
         >
             ▶
         </button>

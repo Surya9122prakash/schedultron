@@ -54,8 +54,8 @@ export const PREDEFINED_CONFLICT_TEMPLATES: Record<string, ConflictTemplate> = {
         description: "Overlapping periods detected.",
         buttonText: "Dismiss",
         theme: {
-            primaryColor: "#f8fafc",
-            secondaryColor: "#334155",
+            primaryColor: "#334155",
+            secondaryColor: "#1e293b",
             backgroundColor: "#0f172a",
             textColor: "#f1f5f9",
             borderColor: "#1e293b",
@@ -78,7 +78,7 @@ export const PREDEFINED_CONFLICT_TEMPLATES: Record<string, ConflictTemplate> = {
         description: "Your schedule is overlapping.",
         buttonText: "Clear Up",
         theme: {
-            primaryColor: "#fff",
+            primaryColor: "rgba(255, 255, 255, 0.3)",
             secondaryColor: "rgba(255, 255, 255, 0.2)",
             backgroundColor: "rgba(255, 255, 255, 0.1)",
             textColor: "#fff",

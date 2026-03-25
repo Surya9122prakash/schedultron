@@ -413,7 +413,7 @@ export const DayView: React.FC<CalendarProps> = ({
         <button
             onClick={goToPreviousDay}
             disabled={!canGoToPreviousDay}
-            className={`px-3 py-1 rounded ${!canGoToPreviousDay ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-200'}`}
+            className={`px-3 py-1 rounded ${!canGoToPreviousDay ? 'opacity-50 cursor-not-allowed' : 'calendar-hover-bg'}`}
         >
             ◀
         </button>
@@ -423,7 +423,7 @@ export const DayView: React.FC<CalendarProps> = ({
         <button
             onClick={goToNextDay}
             disabled={!canGoToNextDay}
-            className={`px-3 py-1 rounded ${!canGoToNextDay ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-200'}`}
+            className={`px-3 py-1 rounded ${!canGoToNextDay ? 'opacity-50 cursor-not-allowed' : 'calendar-hover-bg'}`}
         >
             ▶
         </button>
@@ -617,7 +617,7 @@ export const DayView: React.FC<CalendarProps> = ({
                                             cursor: enabled ? "pointer" : "not-allowed",
                                             backgroundColor: enabled ? "transparent" : "rgba(0,0,0,0.02)"
                                         }}
-                                        className={`border-b border-dotted transition-colors ${enabled ? "hover:bg-gray-50" : ""}`}
+                                        className={`border-b border-dotted transition-colors ${enabled ? "calendar-hover-bg" : ""}`}
                                     />
                                 );
                             })}

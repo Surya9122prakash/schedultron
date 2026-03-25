@@ -111,13 +111,13 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
     );
 
     const prevNode = (
-        <button onClick={() => handleDateChange(zonedDate.clone().subtract(1, "month"))} className="px-3 py-1 rounded hover:bg-gray-100 transition-colors" style={{ color: "var(--calendar-text)" }}>
+        <button onClick={() => handleDateChange(zonedDate.clone().subtract(1, "month"))} className="px-3 py-1 rounded calendar-hover-bg transition-colors" style={{ color: "var(--calendar-text)" }}>
             ◀
         </button>
     );
 
     const nextNode = (
-        <button onClick={() => handleDateChange(zonedDate.clone().add(1, "month"))} className="px-3 py-1 rounded hover:bg-gray-100 transition-colors" style={{ color: "var(--calendar-text)" }}>
+        <button onClick={() => handleDateChange(zonedDate.clone().add(1, "month"))} className="px-3 py-1 rounded calendar-hover-bg transition-colors" style={{ color: "var(--calendar-text)" }}>
             ▶
         </button>
     );
@@ -196,7 +196,7 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
                     <div className="flex items-center justify-between mb-4">
                         <button
                             onClick={goToPreviousMonth}
-                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            className="p-1 calendar-hover-bg rounded transition-colors"
                             style={{ color: "var(--calendar-text)" }}
                         >
                             ◀
@@ -206,7 +206,7 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
                         </div>
                         <button
                             onClick={goToNextMonth}
-                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            className="p-1 calendar-hover-bg rounded transition-colors"
                             style={{ color: "var(--calendar-text)" }}
                         >
                             ▶
@@ -229,7 +229,7 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
                             const isSelected = day.isSame(zonedDate, "day");
                             const isToday = day.isSame(moment().tz(timezone), "day");
 
-                            let bgClass = "hover:bg-gray-200";
+                            let bgClass = "calendar-hover-bg";
                             let textStyle: React.CSSProperties = { color: "var(--calendar-text)" };
                             let bgStyle: React.CSSProperties = {};
 
