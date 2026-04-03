@@ -17,7 +17,8 @@ export declare const checkIsSlotEnabled: (slot: Moment, enabledTimeSlots?: strin
     start: string;
     end: string;
 }[]) => boolean;
-export declare const getDayEvents: (safeEvents: CalendarEvent[], targetDate: Moment, timezone: string) => CalendarEvent[];
+export declare const generateRecurringEvents: (event: CalendarEvent, rangeStart: Moment, rangeEnd: Moment) => CalendarEvent[];
+export declare const getDayEvents: (safeEvents: CalendarEvent[], targetDate: Moment, timezone: string, enableRecurrence?: boolean) => CalendarEvent[];
 export declare const calculateLayoutEvents: (dayEvents: CalendarEvent[], targetDate: Moment, slotInterval: number) => {
     columnIndex: number;
     columnCount: number;
@@ -28,6 +29,10 @@ export declare const calculateLayoutEvents: (dayEvents: CalendarEvent[], targetD
     start: string | Date | Moment;
     end: string | Date | Moment;
     allDay?: boolean;
+    recurrence?: import('./types').RecurrencePattern;
+    parentId?: string;
+    excludeDates?: string[];
+    originalStart?: string | Date | Moment;
 }[];
 interface ConflictDetail {
     eventId: string;

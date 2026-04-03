@@ -22,4 +22,4 @@ export interface SlotDatePickerProps {
     onSlotSelect?: (time: string) => void;
     selectedSlot?: string;
 }
-export declare const SlotDatePicker: React.FC<SlotDatePickerProps>;
+export declare const SlotDatePicker: React.ForwardRefExoticComponent<SlotDatePickerProps & React.RefAttributes<HTMLDivElement>>;

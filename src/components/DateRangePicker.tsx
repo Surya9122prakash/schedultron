@@ -2,16 +2,16 @@ import { useState, useRef, useEffect, forwardRef, useImperativeHandle, useMemo }
 import moment from "moment-timezone";
 import { CalendarPanel } from "./CalendarPanel";
 import { PREDEFINED_CALENDAR_THEMES } from "./calendarThemes";
-import type { DatePickerProps } from "./types";
+import type { DateRangePickerProps, RangeValue } from "./types";
 
-export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(({
+export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps>(({
     value,
     onChange,
     timezone = moment.tz.guess() || "UTC",
     dateFormat = "YYYY-MM-DD",
     calendarTheme,
     calendarThemeVariant = "classic_light",
-    placeholder = "Select date...",
+    placeholder = "Select date range...",
     className = "",
     disabled = false,
     name,
@@ -46,8 +46,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen]);
 
-    const mValue = value ? moment.tz(value, timezone) : null;
-    const displayValue = mValue?.isValid() ? mValue.format(dateFormat) : "";
+    const range = value || { start: null, end: null };
+    const displayValue = range.start ? `${range.start.format(dateFormat)} - ${range.end ? range.end.format(dateFormat) : "..."}` : "";
 
     return (
         <div ref={containerRef} className={`relative ${className}`} style={{ width: "100%", ...themeStyles }}>
@@ -80,12 +80,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(({
             {isOpen && (
                 <div className="absolute z-50 mt-2">
                     <CalendarPanel
-                        value={mValue}
-                        onChange={(d) => {
-                            onChange?.(d);
-                            setIsOpen(false);
+                        value={range}
+                        onChange={(val: RangeValue) => {
+                            onChange?.(val);
                         }}
-                        mode="single"
+                        mode="range"
                         timezone={timezone}
                         calendarTheme={calendarTheme}
                         calendarThemeVariant={calendarThemeVariant}
@@ -97,4 +96,4 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(({
     );
 });
 
-DatePicker.displayName = "DatePicker";
+DateRangePicker.displayName = "DateRangePicker";

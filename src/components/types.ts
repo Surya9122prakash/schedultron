@@ -19,12 +19,31 @@ export interface ConflictTemplate {
     renderFooter?: (onClose: () => void, theme: ConflictTheme) => React.ReactNode;
 }
 
+export type DatePickerValue = Moment | RangeValue | null;
+
+export interface RangeValue {
+    start: Moment | null;
+    end: Moment | null;
+}
+
+export interface RecurrencePattern {
+    frequency: "daily" | "weekly" | "monthly" | "yearly";
+    interval: number;
+    weekDays?: number[];
+    until?: string;
+    count?: number;
+}
+
 export interface CalendarEvent {
     id: string;
     title: string;
     start: string | Date | Moment;
     end: string | Date | Moment;
     allDay?: boolean;
+    recurrence?: RecurrencePattern;
+    parentId?: string;
+    excludeDates?: string[];
+    originalStart?: string | Date | Moment;
     [key: string]: any;
 }
 
@@ -54,7 +73,7 @@ export interface Plugin {
 export interface CalendarFormField {
     name: string;
     label: string;
-    type: "text" | "textarea" | "datetime" | "date" | "time" | "datetime-local" | "dropdown" | "singleSelect" | "multiselect" | "colorPicker" | "attachment" | "radio" | "boolean" | "year" | "month" | "day";
+    type: "text" | "textarea" | "datetime" | "date" | "time" | "datetime-local" | "dropdown" | "singleSelect" | "multiselect" | "colorPicker" | "attachment" | "radio" | "boolean" | "year" | "month" | "day" | "daterange" | "datetimerange";
     required?: boolean;
     options?: { label: string; value: string }[];
 }
@@ -132,4 +151,45 @@ export interface CalendarProps {
 
     calendarTheme?: CalendarTheme;
     calendarThemeVariant?: "classic_light" | "dark_night" | "slate_modern" | "emerald_forest" | "ocean_breeze" | "midnight_purple" | "amber_gold" | "rose_petal" | "minimal_mono" | "cyber_punk";
+
+    enableDragAndResize?: boolean;
+    enableRecurrence?: boolean;
+}
+
+export interface DatePickerProps {
+    value?: Moment | string | Date | null;
+    onChange?: (value: Moment | null) => void;
+    timezone?: string;
+    dateFormat?: string;
+    calendarTheme?: CalendarTheme;
+    calendarThemeVariant?: string;
+    placeholder?: string;
+    className?: string;
+    disabled?: boolean;
+    name?: string;
+    onBlur?: React.FocusEventHandler<HTMLInputElement>;
+}
+
+export interface DateRangePickerProps extends Omit<DatePickerProps, "value" | "onChange"> {
+    value?: RangeValue | null;
+    onChange?: (value: RangeValue | null) => void;
+}
+
+export interface DateTimePickerProps extends DatePickerProps {
+    timeFormat?: string;
+}
+
+export interface DateTimeRangePickerProps extends Omit<DatePickerProps, "value" | "onChange"> {
+    value?: RangeValue | null;
+    onChange?: (value: RangeValue | null) => void;
+    timeFormat?: string;
+}
+
+export interface TimePickerProps extends Omit<DatePickerProps, "dateFormat"> {
+    timeFormat?: string;
+}
+
+export interface TimeRangePickerProps extends Omit<TimePickerProps, "value" | "onChange"> {
+    value?: RangeValue | null;
+    onChange?: (value: RangeValue | null) => void;
 }

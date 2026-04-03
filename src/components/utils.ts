@@ -92,15 +92,84 @@ export const checkIsSlotEnabled = (
     return true;
 };
 
+export const generateRecurringEvents = (
+    event: CalendarEvent,
+    rangeStart: Moment,
+    rangeEnd: Moment
+): CalendarEvent[] => {
+    if (!event.recurrence) return [event];
+    const occurrences: CalendarEvent[] = [];
+    let current = moment(event.start).tz(rangeStart.tz() || "UTC");
+    const duration = moment(event.end).diff(moment(event.start));
+    const until = event.recurrence.until ? moment(event.recurrence.until).endOf("day") : rangeEnd;
+    const count = event.recurrence.count || Infinity;
+    const exclusions = event.excludeDates || [];
+    const weekDays = event.recurrence.weekDays;
+
+    let totalOccurrences = 0;
+
+    // Safety limit to prevent infinite loops or excessive memory usage
+    const MAX_OCCURRENCES = 1000;
+
+    while (current.isBefore(until) && current.isBefore(rangeEnd) && totalOccurrences < count && totalOccurrences < MAX_OCCURRENCES) {
+        const dateStr = current.format("YYYY-MM-DD");
+
+        // Check if we should include this day based on weekDays (only for weekly)
+        const isCorrectDay = event.recurrence.frequency !== "weekly" || !weekDays || weekDays.length === 0 || weekDays.includes(current.day());
+
+        if (isCorrectDay && (current.isSameOrAfter(rangeStart, "day") || current.isSameOrAfter(moment(event.start), "day"))) {
+            if (!exclusions.includes(dateStr)) {
+                occurrences.push({
+                    ...event,
+                    id: `${event.id}-${current.format("YYYYMMDD")}`,
+                    parentId: event.id,
+                    start: current.toDate(),
+                    end: current.clone().add(duration).toDate(),
+                });
+            }
+            totalOccurrences++;
+        }
+
+        // Increment logic
+        if (event.recurrence.frequency === "daily") {
+            current.add(event.recurrence.interval, "days");
+        } else if (event.recurrence.frequency === "weekly") {
+            if (weekDays && weekDays.length > 0) {
+                current.add(1, "day");
+                if (current.day() === 0 && event.recurrence.interval > 1) {
+                    current.add(event.recurrence.interval - 1, "weeks");
+                }
+            } else {
+                current.add(event.recurrence.interval, "weeks");
+            }
+        } else if (event.recurrence.frequency === "monthly") {
+            current.add(event.recurrence.interval, "months");
+        } else if (event.recurrence.frequency === "yearly") {
+            current.add(event.recurrence.interval, "years");
+        } else {
+            break;
+        }
+    }
+    return occurrences;
+};
+
 // Expanded events filter for a specific day
 export const getDayEvents = (
     safeEvents: CalendarEvent[],
     targetDate: Moment,
-    timezone: string
+    timezone: string,
+    enableRecurrence: boolean = true
 ) => {
     const result: CalendarEvent[] = [];
 
-    safeEvents.forEach((e) => {
+    const expandedEvents = safeEvents.flatMap(e => {
+        if (enableRecurrence && e.recurrence) {
+            return generateRecurringEvents(e, targetDate.clone().startOf("day"), targetDate.clone().endOf("day"));
+        }
+        return [e];
+    });
+
+    expandedEvents.forEach((e) => {
         const start = normalizeDate(e.start, timezone);
         const end = normalizeDate(e.end, timezone);
 

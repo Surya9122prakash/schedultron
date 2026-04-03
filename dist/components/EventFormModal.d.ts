@@ -28,6 +28,8 @@ interface EventFormModalProps {
         end: string;
     }[];
     events: CalendarEvent[];
+    calendarThemeVariant?: string;
+    enableRecurrence?: boolean;
 }
 export declare const EventFormModal: React.FC<EventFormModalProps>;
 export {};

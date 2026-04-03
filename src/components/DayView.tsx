@@ -21,6 +21,7 @@ import { EventFormModal } from "./EventFormModal";
 import { PluginManager } from "./pluginSystem";
 import { PREDEFINED_CONFLICT_TEMPLATES } from "./conflictTemplates";
 import { PREDEFINED_CALENDAR_THEMES } from "./calendarThemes";
+import { useDragAndResize } from "../hooks/useDragAndResize";
 
 export const DayView: React.FC<CalendarProps> = ({
     timezone = moment.tz.guess() || "UTC",
@@ -57,6 +58,8 @@ export const DayView: React.FC<CalendarProps> = ({
     conflictThemeVariant,
     calendarTheme,
     calendarThemeVariant,
+    enableDragAndResize = true,
+    enableRecurrence = true,
 }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);
@@ -167,8 +170,8 @@ export const DayView: React.FC<CalendarProps> = ({
        MULTI DAY SPLIT & OVERLAP LAYOUT
     --------------------------*/
     const expandedEvents = useMemo(
-        () => getDayEvents(safeEvents, zonedDate, timezone),
-        [safeEvents, zonedDate, timezone]
+        () => getDayEvents(safeEvents, zonedDate, timezone, enableRecurrence),
+        [safeEvents, zonedDate, timezone, enableRecurrence]
     );
 
     const dayEvents = expandedEvents.filter((e) => !e.allDay);
@@ -204,73 +207,28 @@ export const DayView: React.FC<CalendarProps> = ({
     /* -------------------------
        DRAG + RESIZE
     --------------------------*/
-    const [dragging, setDragging] = useState<any>(null);
-    const [resizing, setResizing] = useState<any>(null);
+    const {
+        handleMouseDown,
+        creatingEvent,
+    } = useDragAndResize({
+        slotInterval,
+        zonedDate,
+        containerRef: gridRef,
+        onEventDrop: (event) => onEditEvent(event),
+        onEventResize: (event) => onEditEvent(event),
+        enabled: enableDragAndResize,
+        onEventCreate: (event) => {
+            setFormData({
+                ...event,
+                start: event.start.format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`),
+                end: event.end.format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`),
+            });
+            setIsFormOpen(true);
+        },
+    });
 
     const snapMinutes = (minutes: number) =>
         Math.round(minutes / slotInterval) * slotInterval;
-
-    useEffect(() => {
-        const handleMove = (e: MouseEvent) => {
-            if (!gridRef.current) return;
-
-            const rect = gridRef.current.getBoundingClientRect();
-            const offsetY = e.clientY - rect.top;
-            const minutes =
-                (offsetY / SLOT_HEIGHT) * slotInterval;
-
-            if (dragging) {
-                const snapped = snapMinutes(minutes);
-                const newStart = zonedDate
-                    .clone()
-                    .startOf("day")
-                    .add(snapped, "minutes");
-
-                const duration = dragging.end.diff(
-                    dragging.start,
-                    "minutes"
-                );
-
-                const updatedEvent = {
-                    ...dragging,
-                    start: newStart,
-                    end: newStart.clone().add(duration, "minutes"),
-                };
-                onEventChange?.(updatedEvent);
-                pluginManager.triggerOnEventChange(updatedEvent);
-            }
-
-            if (resizing) {
-                const snapped = snapMinutes(minutes);
-                const newEnd = zonedDate
-                    .clone()
-                    .startOf("day")
-                    .add(snapped, "minutes");
-
-                if (newEnd.isAfter(resizing.start)) {
-                    const updatedEvent = {
-                        ...resizing,
-                        end: newEnd,
-                    };
-                    onEventChange?.(updatedEvent);
-                    pluginManager.triggerOnEventChange(updatedEvent);
-                }
-            }
-        };
-
-        const stop = () => {
-            setDragging(null);
-            setResizing(null);
-        };
-
-        window.addEventListener("mousemove", handleMove);
-        window.addEventListener("mouseup", stop);
-
-        return () => {
-            window.removeEventListener("mousemove", handleMove);
-            window.removeEventListener("mouseup", stop);
-        };
-    }, [dragging, resizing, zonedDate, slotInterval, onEventChange]);
 
     const handleGridDoubleClick = (e: React.MouseEvent, slot?: Moment) => {
         let start: Moment;
@@ -599,7 +557,20 @@ export const DayView: React.FC<CalendarProps> = ({
                         </div>
 
                         {/* GRID */}
-                        <div ref={gridRef} className="flex-1 relative" onDoubleClick={(e) => handleGridDoubleClick(e)}>
+                        <div ref={gridRef} className="flex-1 relative"
+                            onDoubleClick={(e) => handleGridDoubleClick(e)}
+                            onMouseDown={(e) => {
+                                if ((e.target as HTMLElement).closest('.schedultron-event-item')) return;
+                                if (!isDateRestricted) {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const offsetY = e.clientY - rect.top;
+                                    const minutes = (offsetY / SLOT_HEIGHT) * slotInterval;
+                                    const snapped = snapMinutes(minutes);
+                                    const start = zonedDate.clone().startOf("day").add(snapped, "minutes");
+                                    handleMouseDown(e, { start: start.toISOString(), end: start.clone().add(15, "minutes") } as any, "create");
+                                }
+                            }}
+                        >
                             {timeSlots.map((slot, i) => {
                                 const enabled = isSlotEnabled(slot);
                                 return (
@@ -629,7 +600,10 @@ export const DayView: React.FC<CalendarProps> = ({
                                     ref={(el) => {
                                         if (el) pluginManager.triggerOnEventRender(event, el);
                                     }}
-                                    onMouseDown={() => setDragging(event)}
+                                    onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        handleMouseDown(e, event, "move", e.currentTarget);
+                                    }}
                                     onDoubleClick={(e) => {
                                         e.stopPropagation();
                                         pluginManager.triggerOnEventClick(event);
@@ -638,12 +612,12 @@ export const DayView: React.FC<CalendarProps> = ({
                                         setEditingEvent(event);
                                         setFormData({
                                             ...event,
-                                            start: moment(event.start).tz(timezone).format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`),
-                                            end: moment(event.end).tz(timezone).format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`),
+                                            start: moment(event.start).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+                                            end: moment(event.end).tz(timezone).format("YYYY-MM-DDTHH:mm"),
                                         });
                                         setIsFormOpen(true);
                                     }}
-                                    className="absolute rounded px-2 text-sm cursor-move z-10"
+                                    className="absolute rounded px-2 text-sm cursor-pointer z-10 schedultron-event-item"
                                     style={{
                                         top: event.top,
                                         height: event.height,
@@ -653,9 +627,18 @@ export const DayView: React.FC<CalendarProps> = ({
                                             }%`,
                                         width: `${100 / event.columnCount}%`,
                                         backgroundColor: "var(--calendar-event-bg)",
-                                        color: "var(--calendar-event-text)"
+                                        color: "var(--calendar-event-text)",
+                                        border: "1px solid var(--calendar-primary)"
                                     }}
                                 >
+                                    {/* TOP RESIZE HANDLE */}
+                                    <div
+                                        onMouseDown={(e) => {
+                                            handleMouseDown(e, event, "resize-top", e.currentTarget.parentElement || undefined);
+                                        }}
+                                        className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize z-20"
+                                        style={{ backgroundColor: "var(--calendar-primary)", opacity: 0.3 }}
+                                    />
                                     {event.title}
 
                                     {/* DELETE */}
@@ -671,17 +654,29 @@ export const DayView: React.FC<CalendarProps> = ({
                                         </button>
                                     )}
 
-                                    {/* RESIZE HANDLE */}
+                                    {/* BOTTOM RESIZE HANDLE */}
                                     <div
                                         onMouseDown={(e) => {
-                                            e.stopPropagation();
-                                            setResizing(event);
+                                            handleMouseDown(e, event, "resize-bottom", e.currentTarget.parentElement || undefined);
                                         }}
-                                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize"
-                                        style={{ backgroundColor: "var(--calendar-primary)", opacity: 0.5 }}
+                                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize z-20"
+                                        style={{ backgroundColor: "var(--calendar-primary)", opacity: 0.3 }}
                                     />
                                 </div>
                             ))}
+
+                            {/* CREATING GHOST EVENT */}
+                            {creatingEvent && (
+                                <div
+                                    className="absolute bg-blue-500/30 border-2 border-blue-500/50 rounded z-50 pointer-events-none"
+                                    style={{
+                                        top: (moment(creatingEvent.start).diff(zonedDate.clone().startOf("day"), "minutes") / slotInterval) * SLOT_HEIGHT,
+                                        height: (moment(creatingEvent.end).diff(moment(creatingEvent.start), "minutes") / slotInterval) * SLOT_HEIGHT,
+                                        left: 0,
+                                        right: 0
+                                    }}
+                                />
+                            )}
 
                             {/* ANIMATED EMPTY STATE (ONLY WORKING HOURS) */}
                             {showEmptyState &&
@@ -769,6 +764,8 @@ export const DayView: React.FC<CalendarProps> = ({
                     enabledTimeInterval={enabledTimeInterval}
                     disableTimeInterval={disableTimeInterval}
                     events={safeEvents}
+                    calendarThemeVariant={calendarThemeVariant}
+                    enableRecurrence={enableRecurrence}
                 />
             )}
         </div>

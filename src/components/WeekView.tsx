@@ -13,6 +13,7 @@ import {
 import { EventFormModal } from "./EventFormModal";
 import { PluginManager } from "./pluginSystem";
 import { PREDEFINED_CALENDAR_THEMES } from "./calendarThemes";
+import { useDragAndResize } from "../hooks/useDragAndResize";
 
 export const WeekView: React.FC<CalendarProps> = ({
     timezone = moment.tz.guess() || "UTC",
@@ -128,6 +129,28 @@ export const WeekView: React.FC<CalendarProps> = ({
     const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
     const [formData, setFormData] = useState<any>({});
 
+    const gridRef = useRef<HTMLDivElement>(null);
+
+    const {
+        handleMouseDown,
+        creatingEvent,
+    } = useDragAndResize({
+        slotInterval,
+        zonedDate: startOfWeek,
+        containerRef: gridRef,
+        onEventDrop: (event) => onEditEvent(event),
+        onEventResize: (event) => onEditEvent(event),
+        onEventCreate: (event) => {
+            setEditingEvent(null);
+            setFormData({
+                ...event,
+                start: event.start.format("YYYY-MM-DDTHH:mm"),
+                end: event.end.format("YYYY-MM-DDTHH:mm"),
+            });
+            setIsFormOpen(true);
+        },
+    });
+
     const workingHoursRange = useMemo(
         () => getWorkingHoursRange(enabledTimeInterval),
         [enabledTimeInterval]
@@ -169,8 +192,8 @@ export const WeekView: React.FC<CalendarProps> = ({
     const layoutEventsPerDay = useMemo(() => {
         pluginManager.triggerBeforeRender();
         const layouts = weekDays.map((day) => {
-            const dayEventsList = getDayEvents(safeEvents, day, timezone).filter(e => !e.allDay);
-            return calculateLayoutEvents(dayEventsList, day, slotInterval);
+            const dayEvents = getDayEvents(events, day, timezone);
+            return calculateLayoutEvents(dayEvents, day, slotInterval);
         });
         pluginManager.triggerAfterRender();
         return layouts;
@@ -396,7 +419,23 @@ export const WeekView: React.FC<CalendarProps> = ({
                         </div>
 
                         {/* 7 DAY GRID CONTAINER */}
-                        <div className="flex flex-1 relative min-w-[700px]" style={{ backgroundColor: "var(--calendar-bg)" }}>
+                        <div ref={gridRef} className="flex flex-1 relative min-w-[700px]" style={{ backgroundColor: "var(--calendar-bg)" }}
+                            onMouseDown={(e) => {
+                                // If click hit an event or handle, stop.
+                                if ((e.target as HTMLElement).closest('.schedultron-event-item')) return;
+
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const colWidth = rect.width / 7;
+                                const dayIndex = Math.floor((e.clientX - rect.left) / colWidth);
+                                const day = weekDays[dayIndex];
+
+                                const offsetY = e.clientY - rect.top;
+                                const minutes = (offsetY / SLOT_HEIGHT) * slotInterval;
+                                const start = day.clone().startOf("day").add(Math.floor(minutes / 15) * 15, "minutes");
+
+                                handleMouseDown(e, { start: start.toISOString(), end: start.clone().add(15, "minutes") } as any, "create");
+                            }}
+                        >
 
                             {/* THE HORIZONTAL ROWS (drawn behind) */}
                             <div className="absolute inset-0 pointer-events-none">
@@ -415,15 +454,17 @@ export const WeekView: React.FC<CalendarProps> = ({
                                 const isToday = day.isSame(now, "day");
 
                                 return (
-                                    <div key={day.format("YYYY-MM-DD")} className="flex-1 relative">
-
-                                        {/* CLICKABLE AREA (future enhancement: double click to add) */}
-                                        <div className="absolute inset-0 z-0 bg-transparent cursor-pointer" onDoubleClick={() => {
+                                    <div
+                                        key={day.format("YYYY-MM-DD")}
+                                        className="flex-1 relative"
+                                        onDoubleClick={(e) => {
+                                            if ((e.target as HTMLElement).closest('.schedultron-event-item')) return;
                                             if (onlyCreateEditRequired) {
-                                                setFormData({ start: day.clone().hour(9).format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`) });
+                                                setFormData({ start: day.clone().hour(9).format("YYYY-MM-DDTHH:mm") });
                                                 setIsFormOpen(true);
                                             }
-                                        }} />
+                                        }}
+                                    >
 
                                         {/* CURRENT TIME LINE */}
                                         {isToday && (
@@ -456,6 +497,10 @@ export const WeekView: React.FC<CalendarProps> = ({
                                             {dayLayoutEvents.map((event) => (
                                                 <div
                                                     key={event.id}
+                                                    onMouseDown={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMouseDown(e, event, "move", e.currentTarget);
+                                                    }}
                                                     onDoubleClick={(e) => {
                                                         e.stopPropagation();
                                                         pluginManager.triggerOnEventClick(event);
@@ -463,15 +508,15 @@ export const WeekView: React.FC<CalendarProps> = ({
                                                         setEditingEvent(event);
                                                         setFormData({
                                                             ...event,
-                                                            start: moment(event.start).tz(timezone).format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`),
-                                                            end: moment(event.end).tz(timezone).format(`${dateFormat || "YYYY-MM-DD"} ${timeFormat || "HH:mm"}`),
+                                                            start: moment(event.start).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+                                                            end: moment(event.end).tz(timezone).format("YYYY-MM-DDTHH:mm"),
                                                         });
                                                         setIsFormOpen(true);
                                                     }}
                                                     ref={(el) => {
                                                         if (el) pluginManager.triggerOnEventRender(event, el);
                                                     }}
-                                                    className="absolute rounded-[4px] px-2 text-xs font-medium cursor-pointer shadow-sm hover:z-20 border pointer-events-auto transition-all overflow-hidden"
+                                                    className="absolute rounded-[4px] px-2 text-xs font-medium cursor-pointer shadow-sm hover:z-20 border pointer-events-auto overflow-hidden schedultron-event-item"
                                                     style={{
                                                         top: event.top,
                                                         height: Math.max(event.height, 20),
@@ -483,6 +528,22 @@ export const WeekView: React.FC<CalendarProps> = ({
                                                     }}
                                                 >
                                                     <div className="truncate">{event.title}</div>
+
+                                                    {/* Resize Handles */}
+                                                    <div
+                                                        className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize hover:bg-white/30 z-30"
+                                                        onMouseDown={(e) => {
+                                                            e.stopPropagation();
+                                                            handleMouseDown(e, event, "resize-top", e.currentTarget.parentElement!);
+                                                        }}
+                                                    />
+                                                    <div
+                                                        className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize hover:bg-white/30 z-30"
+                                                        onMouseDown={(e) => {
+                                                            e.stopPropagation();
+                                                            handleMouseDown(e, event, "resize-bottom", e.currentTarget.parentElement!);
+                                                        }}
+                                                    />
 
                                                     {onDeleteEvent && onlyCreateEditRequired && (
                                                         <button
@@ -503,6 +564,18 @@ export const WeekView: React.FC<CalendarProps> = ({
                                 );
                             })}
                         </div>
+                        {/* GHOSTS FOR DRAG/CREATE */}
+                        {creatingEvent && (
+                            <div
+                                className="absolute bg-blue-500/30 border-2 border-blue-500/50 rounded z-50 pointer-events-none"
+                                style={{
+                                    top: (moment(creatingEvent.start).diff(moment(creatingEvent.start).clone().startOf("day"), "minutes") / slotInterval) * SLOT_HEIGHT,
+                                    height: (moment(creatingEvent.end).diff(moment(creatingEvent.start), "minutes") / slotInterval) * SLOT_HEIGHT,
+                                    left: `${(moment(creatingEvent.start).diff(startOfWeek, 'days') / 7) * 100}%`,
+                                    width: `${100 / 7}%`,
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -524,6 +597,7 @@ export const WeekView: React.FC<CalendarProps> = ({
                         pluginManager={pluginManager}
                         disableTimeInterval={disableTimeInterval}
                         events={safeEvents}
+                        calendarThemeVariant={calendarThemeVariant}
                     />
                 )}
             </div>

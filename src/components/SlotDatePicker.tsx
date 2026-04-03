@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import moment, { type Moment } from "moment-timezone";
 import { PREDEFINED_CALENDAR_THEMES } from "./calendarThemes";
 import type { CalendarTheme } from "./types";
@@ -27,7 +27,7 @@ export interface SlotDatePickerProps {
     selectedSlot?: string;
 }
 
-export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
+export const SlotDatePicker = forwardRef<HTMLDivElement, SlotDatePickerProps>(({
     value,
     onChange,
     timezone = moment.tz.guess() || "UTC",
@@ -38,9 +38,10 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
     slots,
     onSlotSelect,
     selectedSlot
-}) => {
+}, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    useImperativeHandle(ref, () => containerRef.current!);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -71,7 +72,8 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
         "--calendar-grid": activeTheme.gridColor,
         "--calendar-text": activeTheme.textColor,
         "--calendar-secondary-text": activeTheme.secondaryTextColor,
-    } as React.CSSProperties), [activeTheme]);
+        "--calendar-is-dark": ["dark_night", "midnight_purple", "cyber_punk"].includes(calendarThemeVariant || "") ? "1" : "0"
+    } as React.CSSProperties), [activeTheme, calendarThemeVariant]);
 
     const [viewDate, setViewDate] = useState(() => {
         const d = value ? moment.tz(value, timezone) : moment.tz(timezone);
@@ -119,31 +121,70 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
     };
 
     return (
-        <div className={`flex flex-col md:flex-row rounded-xl border ${className}`} style={{ ...themeStyles, backgroundColor: "var(--calendar-secondary-bg)", borderColor: "var(--calendar-grid)", width: slots && slots.length > 0 ? 'fit-content' : undefined }}>
-            <div className={`flex flex-col p-4 ${slots && slots.length > 0 ? 'md:border-r border-b md:border-b-0' : ''}`} style={{ borderColor: "var(--calendar-grid)", minWidth: "300px" }}>
-                <div className="flex justify-between items-center mb-4">
-                    <button
-                        onClick={(e) => { e.preventDefault(); setViewDate(viewDate.clone().subtract(1, "month")); }}
-                        className="p-1 px-3 hover:opacity-70 rounded transition-opacity"
-                        style={{ color: "var(--calendar-text)" }}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <div className="font-semibold text-base" style={{ color: "var(--calendar-text)" }}>
-                        {viewDate.format("MMMM YYYY")}
+        <div className={`flex flex-col md:flex-row rounded-[32px] border-2 shadow-2xl overflow-hidden ${className}`} style={{ ...themeStyles, backgroundColor: "var(--calendar-secondary-bg)", borderColor: "var(--calendar-grid)", width: 'fit-content', height: 'fit-content', maxWidth: '100%', position: 'relative' }}>
+            <style>{`
+                .premium-scrollbar::-webkit-scrollbar {
+                    width: 5px;
+                }
+                .premium-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .premium-scrollbar::-webkit-scrollbar-thumb {
+                    background: var(--calendar-grid);
+                    border-radius: 10px;
+                }
+                .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: var(--calendar-primary);
+                }
+                /* Firefox support */
+                .premium-scrollbar {
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--calendar-grid) transparent;
+                }
+            `}</style>
+
+            {/* Left Panel: Calendar */}
+            <div className={`flex flex-col p-8 ${slots && slots.length > 0 ? 'md:border-r border-b md:border-b-0' : ''}`} style={{ borderColor: "var(--calendar-grid)", minWidth: "340px" }}>
+                <div className="flex justify-between items-center mb-8">
+                    <div className="flex gap-2 items-center">
+                        <select
+                            value={viewDate.month()}
+                            onChange={(e) => setViewDate(viewDate.clone().month(parseInt(e.target.value)))}
+                            className="text-sm font-bold bg-white/5 rounded-lg px-2 py-1 outline-none cursor-pointer hover:bg-white/10 transition-colors uppercase tracking-tight"
+                            style={{ color: "var(--calendar-text)" }}
+                        >
+                            {moment.months().map((m, i) => <option key={m} value={i} className="bg-[#1e1e1e]">{m}</option>)}
+                        </select>
+                        <select
+                            value={viewDate.year()}
+                            onChange={(e) => setViewDate(viewDate.clone().year(parseInt(e.target.value)))}
+                            className="text-sm font-bold bg-white/5 rounded-lg px-2 py-1 outline-none cursor-pointer hover:bg-white/10 transition-colors uppercase tracking-tight"
+                            style={{ color: "var(--calendar-text)" }}
+                        >
+                            {Array.from({ length: 20 }, (_, i) => viewDate.year() - 10 + i).map(y => <option key={y} value={y} className="bg-[#1e1e1e]">{y}</option>)}
+                        </select>
                     </div>
-                    <button
-                        onClick={(e) => { e.preventDefault(); setViewDate(viewDate.clone().add(1, "month")); }}
-                        className="p-1 px-3 hover:opacity-70 rounded transition-opacity"
-                        style={{ color: "var(--calendar-text)" }}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-                    </button>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={(e) => { e.preventDefault(); setViewDate(viewDate.clone().subtract(1, "month")); }}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-full transition-all"
+                            style={{ color: "var(--calendar-text)" }}
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <button
+                            onClick={(e) => { e.preventDefault(); setViewDate(viewDate.clone().add(1, "month")); }}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-full transition-all"
+                            style={{ color: "var(--calendar-text)" }}
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-7 mb-2">
+                <div className="grid grid-cols-7 mb-4">
                     {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-                        <div key={d} className="text-center text-xs font-bold uppercase mb-1" style={{ color: "var(--calendar-secondary-text)" }}>{d}</div>
+                        <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest opacity-40 mb-1" style={{ color: "var(--calendar-text)" }}>{d}</div>
                     ))}
                 </div>
 
@@ -152,27 +193,19 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
                         const isCurrentMonth = d.isSame(viewDate, "month");
                         const isSelected = value ? d.isSame(moment.tz(value, timezone), "day") : false;
 
-                        let bgStyle = { backgroundColor: "transparent" };
-                        let textStyle = { color: "var(--calendar-text)" };
-
-                        if (isSelected) {
-                            bgStyle = { backgroundColor: "var(--calendar-primary)" };
-                            textStyle = { color: "#ffffff" };
-                        }
-
                         return (
                             <button
                                 key={i}
                                 disabled={disabled}
-                                onClick={() => {
-                                    if (onChange) onChange(d);
-                                }}
-                                className={`h-10 w-10 mx-auto flex items-center justify-center rounded-full text-sm font-medium transition-colors ${!disabled ? "hover:opacity-70 calendar-hover-bg" : "cursor-not-allowed"
-                                    }`}
+                                onClick={() => onChange?.(d)}
+                                className={`h-10 w-10 mx-auto flex items-center justify-center rounded-xl text-sm font-bold transition-all relative
+                                    ${isSelected ? "z-10 shadow-lg scale-110" : "hover:bg-white/5 hover:scale-105"}
+                                    ${!isCurrentMonth ? "opacity-20" : "opacity-100"}
+                                `}
                                 style={{
-                                    ...bgStyle,
-                                    ...textStyle,
-                                    opacity: isCurrentMonth ? (disabled ? 0.6 : 1) : 0.3
+                                    backgroundColor: isSelected ? "var(--calendar-primary)" : "transparent",
+                                    color: isSelected ? "#ffffff" : "var(--calendar-text)",
+                                    boxShadow: isSelected ? `0 8px 15px var(--calendar-primary)44` : "none"
                                 }}
                             >
                                 {d.date()}
@@ -182,23 +215,24 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
                 </div>
             </div>
 
+            {/* Right Panel: Time Slots */}
             {slots && slots.length > 0 && (
-                <div className="flex flex-col p-6 rounded-r-xl" style={{ minWidth: "320px", backgroundColor: "var(--calendar-secondary-bg)" }}>
-                    <div className="text-sm mb-1" style={{ color: "var(--calendar-secondary-text)" }}>
-                        {moment.tz(value || viewDate, timezone).format("dddd D, MMMM YYYY")}
+                <div className="flex flex-col p-8 w-full md:w-[400px]" style={{ backgroundColor: "var(--calendar-bg)" }}>
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-50" style={{ color: "var(--calendar-text)" }}>
+                        {moment.tz(value || viewDate, timezone).format("dddd, MMM D")}
                     </div>
-                    <div className="font-semibold text-lg mb-6" style={{ color: "var(--calendar-text)" }}>
+                    <div className="font-extrabold text-2xl mb-8 leading-tight tracking-tight" style={{ color: "var(--calendar-text)" }}>
                         What time works best for you?
                     </div>
 
-                    <div className="flex flex-col gap-6" style={{ maxHeight: "310px", overflowY: "auto", paddingRight: "8px" }}>
+                    <div className="flex flex-col gap-10 overflow-y-auto premium-scrollbar pr-6" style={{ maxHeight: "360px" }}>
                         {slots.map((group, gIdx) => (
                             <div key={gIdx} className="flex flex-col">
-                                <div className="flex items-center gap-2 mb-3 font-medium text-base" style={{ color: "var(--calendar-text)" }}>
+                                <div className="flex items-center gap-3 mb-5 font-black text-xs uppercase tracking-widest opacity-80" style={{ color: "var(--calendar-primary)" }}>
                                     {getGroupIcon(group.group)}
                                     {group.group}
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid gap-3 pb-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))' }}>
                                     {group.items.map((slot, sIdx) => {
                                         const isSelectedSlot = selectedSlot === slot.time;
                                         return (
@@ -206,14 +240,16 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
                                                 key={sIdx}
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    if (onSlotSelect) onSlotSelect(slot.time);
+                                                    onSlotSelect?.(slot.time);
                                                 }}
-                                                className="py-2 rounded-md text-sm font-medium transition-colors cursor-pointer hover:opacity-80"
+                                                className={`py-3 px-2 rounded-2xl text-[10px] font-black uppercase transition-all cursor-pointer border-2 shadow-sm
+                                                    ${isSelectedSlot ? "scale-105 z-10" : "hover:border-white/20 hover:bg-white/5 active:scale-95"}
+                                                `}
                                                 style={{
-                                                    backgroundColor: isSelectedSlot ? "var(--calendar-primary)" : "var(--calendar-grid)",
+                                                    backgroundColor: isSelectedSlot ? "var(--calendar-primary)" : "transparent",
                                                     color: isSelectedSlot ? "#ffffff" : "var(--calendar-text)",
-                                                    border: "none",
-                                                    opacity: isSelectedSlot ? 1 : 0.8
+                                                    borderColor: isSelectedSlot ? "var(--calendar-primary)" : "var(--calendar-grid)",
+                                                    boxShadow: isSelectedSlot ? `0 8px 15px var(--calendar-primary)44` : "none"
                                                 }}
                                             >
                                                 {slot.time}
@@ -228,4 +264,6 @@ export const SlotDatePicker: React.FC<SlotDatePickerProps> = ({
             )}
         </div>
     );
-};
+});
+
+SlotDatePicker.displayName = "SlotDatePicker";

@@ -60,11 +60,13 @@
     width: 100% !important;
     border: 1px solid var(--calendar-grid, #e5e7eb) !important;
     border-radius: 8px !important;
-    padding: 20px !important;
-    background-color: var(--calendar-secondary-bg, rgba(249, 250, 251, 0.5)) !important;
+    padding: 10px 14px !important;
+    /* Adjusted for better fit */
+    background-color: var(--calendar-bg, #ffffff) !important;
     color: var(--calendar-text, #374151) !important;
     outline: none !important;
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-size: 14px !important;
 }
 
 .schedultron-input-hardened:focus {
@@ -73,16 +75,31 @@
     background-color: var(--calendar-bg, #ffffff) !important;
 }
 
+/* Fix for Select dropdowns in dark mode */
+select.schedultron-input-hardened option {
+    background-color: var(--calendar-bg) !important;
+    color: var(--calendar-text) !important;
+}
+
+/* Fix for Date picker icon and calendar in dark mode */
+input[type="date"].schedultron-input-hardened::-webkit-calendar-picker-indicator {
+    filter: invert(var(--calendar-is-dark, 0));
+    cursor: pointer;
+}
+
 .schedultron-label-hardened {
     display: block !important;
-    font-size: 0.875rem !important;
-    font-weight: 500 !important;
-    margin-bottom: 4px !important;
-    color: var(--calendar-text, #374151) !important;
+    font-size: 0.75rem !important;
+    /* 12px */
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: var(--calendar-secondary-text, #6b7280) !important;
 }
 
 .schedultron-field-container {
-    margin-bottom: 16px !important;
+    margin-bottom: 20px !important;
 }
 
 /* Modal Hardening */

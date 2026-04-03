@@ -26,6 +26,7 @@ export const MonthView: React.FC<CalendarProps> = ({
     plugins,
     calendarTheme,
     calendarThemeVariant,
+    enableDragAndResize = true,
 }) => {
     // Uncontrolled State Fallbacks
     const [internalDate, setInternalDate] = useState<Moment>(() => moment.tz(externalSelectedDate || new Date(), timezone));
@@ -94,6 +95,7 @@ export const MonthView: React.FC<CalendarProps> = ({
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
     const [formData, setFormData] = useState<any>({});
+    const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
 
     const startOfMonth = useMemo(() => zonedDate.clone().startOf("month"), [zonedDate]);
     const endOfMonth = useMemo(() => zonedDate.clone().endOf("month"), [zonedDate]);
@@ -152,8 +154,28 @@ export const MonthView: React.FC<CalendarProps> = ({
 
     const defaultNav = (
         <div className="flex items-center gap-2">
-            {prevNode}
-            {nextNode}
+            <div className="flex gap-1">
+                <select
+                    value={zonedDate.month()}
+                    onChange={(e) => onDateChange(zonedDate.clone().month(parseInt(e.target.value)))}
+                    className="text-sm font-semibold bg-transparent outline-none cursor-pointer hover:opacity-70 px-1 rounded-md"
+                    style={{ color: "var(--calendar-text)" }}
+                >
+                    {moment.months().map((m, i) => <option key={m} value={i} style={{ backgroundColor: "var(--calendar-bg)" }}>{m}</option>)}
+                </select>
+                <select
+                    value={zonedDate.year()}
+                    onChange={(e) => onDateChange(zonedDate.clone().year(parseInt(e.target.value)))}
+                    className="text-sm font-semibold bg-transparent outline-none cursor-pointer hover:opacity-70 px-1 rounded-md"
+                    style={{ color: "var(--calendar-text)" }}
+                >
+                    {Array.from({ length: 20 }, (_, i) => zonedDate.year() - 10 + i).map(y => <option key={y} value={y} style={{ backgroundColor: "var(--calendar-bg)" }}>{y}</option>)}
+                </select>
+            </div>
+            <div className="flex gap-1 ml-2">
+                {prevNode}
+                {nextNode}
+            </div>
         </div>
     );
 
@@ -246,11 +268,40 @@ export const MonthView: React.FC<CalendarProps> = ({
                                         const start = day.clone().hour(9).minute(0);
                                         const end = start.clone().add(1, "hour");
                                         setFormData({
-                                            start: start.format(`${dateFormat || "YYYY-MM-DD"}T${timeFormat || "HH:mm"}`),
-                                            end: end.format(`${dateFormat || "YYYY-MM-DD"}T${timeFormat || "HH:mm"}`)
+                                            start: start.format("YYYY-MM-DDTHH:mm"),
+                                            end: end.format("YYYY-MM-DDTHH:mm")
                                         });
                                         setIsFormOpen(true);
                                     }
+                                }}
+                                onDragOver={(e) => {
+                                    if (!enableDragAndResize) return;
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = "move";
+                                }}
+                                onDrop={(e) => {
+                                    if (!enableDragAndResize || !draggedEvent) return;
+                                    e.preventDefault();
+                                    const dropDate = day.clone();
+                                    const originalStart = moment(draggedEvent.start).tz(timezone);
+                                    const originalEnd = moment(draggedEvent.end).tz(timezone);
+
+                                    // Calculate the difference in DAYS
+                                    const daysDiff = dropDate.clone().startOf('day').diff(originalStart.clone().startOf('day'), 'days');
+
+                                    if (daysDiff !== 0) {
+                                        const newStart = originalStart.clone().add(daysDiff, 'days');
+                                        const newEnd = originalEnd.clone().add(daysDiff, 'days');
+
+                                        if (onEditEvent) {
+                                            onEditEvent({
+                                                ...draggedEvent,
+                                                start: newStart,
+                                                end: newEnd
+                                            });
+                                        }
+                                    }
+                                    setDraggedEvent(null);
                                 }}
                             >
                                 <div className="flex justify-end pr-1">
@@ -266,6 +317,17 @@ export const MonthView: React.FC<CalendarProps> = ({
                                     {dayEvents.slice(0, 4).map(event => (
                                         <div
                                             key={event.id}
+                                            draggable={enableDragAndResize}
+                                            onDragStart={(e) => {
+                                                if (!enableDragAndResize) {
+                                                    e.preventDefault();
+                                                    return;
+                                                }
+                                                e.dataTransfer.effectAllowed = "move";
+                                                try { e.dataTransfer.setData("text/plain", event.id); } catch (err) { }
+                                                setDraggedEvent(event);
+                                            }}
+                                            onDragEnd={() => setDraggedEvent(null)}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 pluginManager.triggerOnEventClick(event);
@@ -273,13 +335,13 @@ export const MonthView: React.FC<CalendarProps> = ({
                                                     setEditingEvent(event);
                                                     setFormData({
                                                         ...event,
-                                                        start: moment(event.start).tz(timezone).format(`${dateFormat || "YYYY-MM-DD"}T${timeFormat || "HH:mm"}`),
-                                                        end: moment(event.end).tz(timezone).format(`${dateFormat || "YYYY-MM-DD"}T${timeFormat || "HH:mm"}`),
+                                                        start: moment(event.start).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+                                                        end: moment(event.end).tz(timezone).format("YYYY-MM-DDTHH:mm"),
                                                     });
                                                     setIsFormOpen(true);
                                                 }
                                             }}
-                                            className="px-1.5 py-0.5 rounded text-[10px] truncate cursor-pointer transition-transform hover:scale-[1.02]"
+                                            className={`px-1.5 py-0.5 rounded text-[10px] truncate transition-transform hover:scale-[1.02] ${enableDragAndResize ? "cursor-move" : "cursor-pointer"}`}
                                             style={{
                                                 backgroundColor: "var(--calendar-event-bg)",
                                                 color: "var(--calendar-event-text)",
@@ -320,6 +382,7 @@ export const MonthView: React.FC<CalendarProps> = ({
                         onDeleteEvent={onDeleteEvent}
                         pluginManager={pluginManager}
                         events={events}
+                        calendarThemeVariant={calendarThemeVariant}
                     />
                 )
             }
